@@ -13,13 +13,16 @@ from custom_types import RAQQueryResult, RAGSearchResult, RAGUpsertResult, RAGCh
 
 load_dotenv() 
 
+# Check if an Event Key is present to determine if we are in production
+is_prod = os.getenv("INNGEST_EVENT_KEY") is not None
+
 inngest_client = inngest.Inngest(
     app_id="rag_app",
     logger=logging.getLogger("uvicorn"),
-    is_production=False,
+    is_production=is_prod,
+    event_key=os.getenv("INNGEST_EVENT_KEY"),  # Pass the secret key to the worker
     serializer=inngest.PydanticSerializer()
 )
-
 @inngest_client.create_function(
     fn_id="RAG: Ingest PDF",
     trigger=inngest.TriggerEvent(event="rag/ingest_pdf"),
