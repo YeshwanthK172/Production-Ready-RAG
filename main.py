@@ -19,7 +19,7 @@ is_prod = os.getenv("INNGEST_EVENT_KEY") is not None
 inngest_client = inngest.Inngest(
     app_id="rag_app",
     logger=logging.getLogger("uvicorn"),
-    is_production=is_prod,
+    is_production=True,
     event_key=os.getenv("INNGEST_EVENT_KEY"),  # Pass the secret key to the worker
     serializer=inngest.PydanticSerializer()
 )
