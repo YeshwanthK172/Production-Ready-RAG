@@ -17,20 +17,19 @@ def send_inngest_event_sync(event_name: str, data: dict) -> str:
         st.error("❌ INNGEST_EVENT_KEY is missing from environment secrets.")
         st.stop()
         
-    url = "https://api.inngest.com/v1/events"
+    # Standard Inngest Ingestion API Endpoint
+    url = f"https://inn.gs/e/{event_key}"
     
-    # Inngest expects 'X-Inngest-Key' header for authenticating event submissions
     headers = {
-        "X-Inngest-Key": event_key,
         "Content-Type": "application/json"
     }
     
-    # Inngest REST API requires an array/list of events, even for a single one
-    payload = [{
+    payload = {
         "name": event_name,
         "data": data
-    }]
+    }
     
+    # Send directly via a clean POST payload
     resp = requests.post(url, json=payload, headers=headers)
     resp.raise_for_status()
     
