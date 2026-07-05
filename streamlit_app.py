@@ -18,26 +18,27 @@ def send_inngest_event_sync(event_name: str, data: dict) -> str:
         st.stop()
         
     url = "https://api.inngest.com/v1/events"
+    
+    # Inngest expects 'X-Inngest-Key' header for authenticating event submissions
     headers = {
-        "Authorization": f"Bearer {event_key}",
+        "X-Inngest-Key": event_key,
         "Content-Type": "application/json"
     }
     
-    payload = {
+    # Inngest REST API requires an array/list of events, even for a single one
+    payload = [{
         "name": event_name,
         "data": data
-    }
+    }]
     
-    # Send a standard POST request
     resp = requests.post(url, json=payload, headers=headers)
     resp.raise_for_status()
     
-    # Inngest returns an object containing an array of sent event IDs
     res_data = resp.json()
     if "ids" in res_data and len(res_data["ids"]) > 0:
         return res_data["ids"][0]
     return ""
-
+    
 def save_uploaded_pdf(file) -> Path:
     uploads_dir = Path("uploads")
     uploads_dir.mkdir(parents=True, exist_ok=True)
