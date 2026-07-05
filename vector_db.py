@@ -1,11 +1,30 @@
+import os
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 
 
 class QdrantStorage:
-    def __init__(self, url="http://localhost:6333", collection="docs", dim=3072):
-        self.client = QdrantClient(url=url, timeout=30)
+    def __init__(self, collection="docs", dim=3072):
+        # 1. Pull environment variables (configured in your Cloud deployment dashboard)
+        qdrant_url = os.getenv("QDRANT_URL")
+        api_key = os.getenv("QDRANT_API_KEY")
+
+        # 2. Fall back to localhost only if cloud environment variables aren't set
+        if not qdrant_url:
+            qdrant_url = "http://localhost:6333"
+            print("⚠️ QDRANT_URL env var not found. Falling back to local: http://localhost:6333")
+        else:
+            print(f"🚀 Connecting securely to Qdrant Cloud Cluster at: {qdrant_url}")
+
+        # 3. Initialize the client safely with or without an API Key
+        self.client = QdrantClient(
+            url=qdrant_url,
+            api_key=api_key,  # Will pass None cleanly if running locally
+            timeout=30
+        )
         self.collection = collection
+        
+        # 4. Auto-verify or create collection securely on initialization
         if not self.client.collection_exists(self.collection):
             self.client.create_collection(
                 collection_name=self.collection,
@@ -13,7 +32,10 @@ class QdrantStorage:
             )
 
     def upsert(self, ids, vectors, payloads):
-        points = [PointStruct(id=ids[i], vector=vectors[i], payload=payloads[i]) for i in range(len(ids))]
+        points = [
+            PointStruct(id=ids[i], vector=vectors[i], payload=payloads[i]) 
+            for i in range(len(ids))
+        ]
         self.client.upsert(self.collection, points=points)
 
     def search(self, query_vector, top_k: int = 5):
